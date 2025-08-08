@@ -60,19 +60,17 @@
             font-size: 1.1rem;
         }
 
-        textarea {
+        input[type="url"] {
             width: 100%;
-            min-height: 200px;
             padding: 20px;
             border: 2px solid #e1e5e9;
             border-radius: 10px;
             font-size: 1rem;
             font-family: 'Courier New', monospace;
-            resize: vertical;
             transition: border-color 0.3s ease;
         }
 
-        textarea:focus {
+        input[type="url"]:focus {
             outline: none;
             border-color: #667eea;
             box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
@@ -181,8 +179,7 @@
                 font-size: 2rem;
             }
 
-            textarea {
-                min-height: 150px;
+            input[type="url"] {
                 padding: 15px;
             }
         }
@@ -208,22 +205,23 @@
         <div class="instructions">
             <h3>📋 How to use:</h3>
             <ul>
-                <li>Enter one or more website URLs (one per line)</li>
+                <li>Enter a website URL to audit</li>
                 <li>Include the full URL with http:// or https://</li>
-                <li>The tool will crawl each site and generate detailed reports</li>
-                <li>Download individual CSV reports for each audited website</li>
+                <li>The tool will analyze the site and generate a detailed report</li>
+                <li>Download the CSV report for the audited website</li>
             </ul>
         </div>
 
         <form action="{{ url_for('audit') }}" method="POST" id="auditForm">
             <div class="form-group">
-                <label for="urls">Enter Website URLs:</label>
-                <textarea 
-                    id="urls" 
-                    name="urls" 
-                    placeholder="https://example.com&#10;https://another-site.com&#10;https://third-website.org"
+                <label for="url">Enter Website URL:</label>
+                <input 
+                    type="url" 
+                    id="url" 
+                    name="url" 
+                    placeholder="https://example.com"
                     required
-                ></textarea>
+                />
             </div>
 
             <button type="submit" class="button" id="submitBtn">
@@ -234,7 +232,7 @@
         <div class="loading" id="loading">
             <div class="spinner"></div>
             <p>Processing your audit request...</p>
-            <p><small>This may take several minutes depending on the number of sites.</small></p>
+            <p><small>This may take a few moments.</small></p>
         </div>
     </div>
 

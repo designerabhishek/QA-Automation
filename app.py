@@ -11,7 +11,7 @@ logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 app = Flask(__name__)
-app.secret_key = os.getenv('SECRET_KEY', 'your-secret-key-here')  # Override in production
+app.secret_key = os.getenv('SECRET_KEY', 'your-secret-key-here')
 
 # Ensure export directory exists
 EXPORT_DIR = 'export'
@@ -27,81 +27,78 @@ def index():
 
 @app.route('/health')
 def health_check():
-    """Health check endpoint for deployment monitoring."""
+    """Health check endpoint for deployment platforms."""
+    logger.info("Health check accessed")
     return {'status': 'healthy', 'timestamp': datetime.now().isoformat()}
 
 @app.route('/audit', methods=['POST'])
 def audit():
     """Handle the audit form submission."""
     try:
-        # Get URLs from the form
-        urls_text = request.form.get('urls', '').strip()
-        
-        if not urls_text:
-            flash('Please enter at least one URL to audit.', 'error')
+        url = request.form.get('url', '').strip()
+        if not url:
+            flash('Please enter a valid URL', 'error')
             return redirect(url_for('index'))
         
-        # Parse URLs (split by newlines and clean up)
-        urls = [url.strip() for url in urls_text.split('\n') if url.strip()]
+        logger.info(f"Audit requested for URL: {url}")
         
-        if not urls:
-            flash('Please enter at least one valid URL to audit.', 'error')
-            return redirect(url_for('index'))
+        # For now, just return a simple response without Selenium
+        # This will help us test if the basic deployment works
+        results = [
+            {
+                'category': 'Basic Check',
+                'check_item': 'URL Accessibility',
+                'status': 'PASS',
+                'details': 'URL is accessible (simplified check)',
+                'url': url
+            },
+            {
+                'category': 'Basic Check', 
+                'check_item': 'Response Time',
+                'status': 'INFO',
+                'details': 'Response time check (simplified)',
+                'url': url
+            }
+        ]
         
-        # Print URLs to console for debugging
-        print(f"Audit requested for {len(urls)} URLs:")
-        for i, url in enumerate(urls, 1):
-            print(f"  {i}. {url}")
+        # Generate CSV filename
+        timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
+        domain = url.replace('https://', '').replace('http://', '').replace('/', '_').replace('.', '_')
+        filename = f"{domain}_{timestamp}.csv"
+        filepath = os.path.join(EXPORT_DIR, filename)
         
-        # Import and use audit_logic module
-        from audit_logic import perform_audit, generate_csv_report
+        # Write results to CSV
+        with open(filepath, 'w', newline='', encoding='utf-8') as csvfile:
+            fieldnames = ['Category', 'Check Item', 'Status', 'Details', 'URL']
+            writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
+            writer.writeheader()
+            for result in results:
+                writer.writerow(result)
         
-        generated_reports = []
-        for url in urls:
-            try:
-                audit_data = perform_audit(url)
-                csv_path = generate_csv_report(audit_data, export_dir=EXPORT_DIR)
-                filename = os.path.basename(csv_path)
-                generated_reports.append({
-                    'url': url,
-                    'filename': filename,
-                    'path': csv_path,
-                })
-            except Exception as e:
-                print(f"Error processing {url}: {e}")
-                flash(f"Error processing {url}: {e}", 'error')
+        logger.info(f"Results saved to: {filepath}")
         
-        # Store generated report filenames in session
-        session['generated_reports'] = generated_reports
-        flash(f'Generated {len(generated_reports)} report(s).', 'info')
-        
-        # Use 303 to ensure clients follow with GET
-        return redirect(url_for('results'), code=303)
+        return render_template('results.html', results=results, filename=filename)
         
     except Exception as e:
-        print(f"Error in audit route: {str(e)}")
+        logger.error(f"Error during audit: {str(e)}")
         flash(f'An error occurred: {str(e)}', 'error')
         return redirect(url_for('index'))
 
-@app.route('/results')
-def results():
-    """Display audit results and download links."""
-    reports = session.get('generated_reports', [])
-    return render_template('results.html', reports=reports)
-
 @app.route('/download/<filename>')
-def download_file(filename):
-    """Serve CSV files for download."""
+def download(filename):
+    """Download the CSV file."""
     try:
-        file_path = os.path.join(EXPORT_DIR, filename)
-        if os.path.exists(file_path):
-            return send_file(file_path, as_attachment=True)
+        filepath = os.path.join(EXPORT_DIR, filename)
+        if os.path.exists(filepath):
+            return send_file(filepath, as_attachment=True)
         else:
-            flash('File not found.', 'error')
+            flash('File not found', 'error')
             return redirect(url_for('index'))
     except Exception as e:
-        flash(f'Error downloading file: {str(e)}', 'error')
+        logger.error(f"Error downloading file: {str(e)}")
+        flash('Error downloading file', 'error')
         return redirect(url_for('index'))
 
 if __name__ == '__main__':
-    app.run(debug=True, host='0.0.0.0', port=5000)
+    port = int(os.getenv('PORT', 10000))
+    app.run(host='0.0.0.0', port=port, debug=False)

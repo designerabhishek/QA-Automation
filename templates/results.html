@@ -23,8 +23,8 @@
         .download-btn:hover { transform: translateY(-2px); box-shadow: 0 8px 15px rgba(102, 126, 234, 0.3); }
         .back-btn { background: #6c757d; color: white; border: none; padding: 12px 25px; border-radius: 8px; font-size: 1rem; font-weight: 600; cursor: pointer; transition: all 0.3s ease; text-decoration: none; display: inline-block; margin-right: 15px; }
         .back-btn:hover { background: #5a6268; transform: translateY(-2px); }
-        .status-pending { color: #856404; background: #fff3cd; padding: 5px 10px; border-radius: 5px; font-size: 0.9rem; font-weight: 600; }
-        .status-completed { color: #155724; background: #d4edda; padding: 5px 10px; border-radius: 5px; font-size: 0.9rem; font-weight: 600; }
+        .status-pass { color: #155724; background: #d4edda; padding: 5px 10px; border-radius: 5px; font-size: 0.9rem; font-weight: 600; }
+        .status-info { color: #0c5460; background: #d1ecf1; padding: 5px 10px; border-radius: 5px; font-size: 0.9rem; font-weight: 600; }
         .status-error { color: #721c24; background: #f8d7da; padding: 5px 10px; border-radius: 5px; font-size: 0.9rem; font-weight: 600; }
         .no-results { text-align: center; padding: 40px; color: #666; }
         .no-results h3 { margin-bottom: 15px; color: #333; }
@@ -32,10 +32,10 @@
         .flash { padding: 15px; border-radius: 8px; margin-bottom: 10px; font-weight: 500; }
         .flash.error { background-color: #fee; color: #c53030; border: 1px solid #feb2b2; }
         .flash.info { background-color: #e6fffa; color: #2c7a7b; border: 1px solid #9ae6b4; }
-        ul.report-list { list-style: none; padding-left: 0; }
-        ul.report-list li { display: flex; justify-content: space-between; align-items: center; gap: 12px; background: #fff; border: 1px solid #e1e5e9; border-radius: 8px; padding: 12px 16px; margin-bottom: 10px; }
-        .report-url { color: #333; font-weight: 600; overflow-wrap: anywhere; }
-        .report-file { color: #666; font-size: 0.9rem; }
+        .results-table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+        .results-table th, .results-table td { padding: 12px; text-align: left; border-bottom: 1px solid #e1e5e9; }
+        .results-table th { background: #f8f9fa; font-weight: 600; color: #333; }
+        .results-table tr:hover { background: #f8f9fa; }
         @media (max-width: 768px) { .container { padding: 20px; margin: 10px; } .header h1 { font-size: 2rem; } .audit-details { grid-template-columns: 1fr; } }
     </style>
 </head>
@@ -43,7 +43,7 @@
     <div class="container">
         <div class="header">
             <h1>📊 Audit Results</h1>
-            <p>Your website audit reports</p>
+            <p>Your website audit report</p>
         </div>
 
         {% with messages = get_flashed_messages(with_categories=true) %}
@@ -57,23 +57,48 @@
         {% endwith %}
 
         <div class="results-section">
-            <h2>📥 Download Reports</h2>
-            {% if reports and reports|length > 0 %}
-                <ul class="report-list">
-                    {% for r in reports %}
-                        <li>
-                            <div>
-                                <div class="report-url">{{ r.url }}</div>
-                                <div class="report-file">{{ r.filename }}</div>
-                            </div>
-                            <a class="download-btn" href="{{ url_for('download_file', filename=r.filename) }}">Download CSV</a>
-                        </li>
-                    {% endfor %}
-                </ul>
+            <h2>📋 Audit Summary</h2>
+            {% if results and results|length > 0 %}
+                <table class="results-table">
+                    <thead>
+                        <tr>
+                            <th>Category</th>
+                            <th>Check Item</th>
+                            <th>Status</th>
+                            <th>Details</th>
+                            <th>URL</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for result in results %}
+                        <tr>
+                            <td>{{ result.category }}</td>
+                            <td>{{ result.check_item }}</td>
+                            <td>
+                                {% if result.status == 'PASS' %}
+                                    <span class="status-pass">{{ result.status }}</span>
+                                {% elif result.status == 'INFO' %}
+                                    <span class="status-info">{{ result.status }}</span>
+                                {% else %}
+                                    <span class="status-error">{{ result.status }}</span>
+                                {% endif %}
+                            </td>
+                            <td>{{ result.details }}</td>
+                            <td>{{ result.url }}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+                
+                {% if filename %}
+                <div style="text-align: center; margin-top: 30px;">
+                    <a href="{{ url_for('download', filename=filename) }}" class="download-btn">📥 Download CSV Report</a>
+                </div>
+                {% endif %}
             {% else %}
                 <div class="no-results">
-                    <h3>No reports available yet</h3>
-                    <p>Submit URLs from the audit tool to generate reports.</p>
+                    <h3>No results available</h3>
+                    <p>No audit results were generated.</p>
                 </div>
             {% endif %}
         </div>
