@@ -5,6 +5,7 @@ services:
     plan: free
     autoDeploy: true
     healthCheckPath: /health
+    dockerfilePath: ./Dockerfile
     envVars:
       - key: SECRET_KEY
         generateValue: true
