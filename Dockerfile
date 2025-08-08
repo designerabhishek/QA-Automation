@@ -36,8 +36,15 @@ RUN pip install --upgrade pip && pip install -r requirements.txt
 
 COPY . /app
 
-# Health check (optional)
-HEALTHCHECK --interval=30s --timeout=5s --retries=3 CMD curl -fsS http://localhost:${PORT:-10000}/ || exit 1
+# Create export directory
+RUN mkdir -p export
+
+# Expose port (Render will override this)
+EXPOSE 10000
+
+# Health check (simplified)
+HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
+    CMD curl -f http://localhost:${PORT:-10000}/ || exit 1
 
 # Render provides $PORT
-CMD bash -lc "gunicorn -w 2 -k gthread -t 120 -b 0.0.0.0:$PORT app:app"
+CMD gunicorn --bind 0.0.0.0:$PORT --timeout 120 --workers 1 --threads 2 app:app

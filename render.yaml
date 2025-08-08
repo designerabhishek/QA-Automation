@@ -5,6 +5,8 @@ services:
     plan: free
     autoDeploy: true
     healthCheckPath: /
+    buildCommand: echo "Building..."
+    startCommand: gunicorn --bind 0.0.0.0:$PORT --timeout 120 --workers 1 --threads 2 app:app
     envVars:
       - key: SECRET_KEY
         generateValue: true
@@ -12,3 +14,7 @@ services:
         value: /usr/bin/chromium
       - key: CHROMEDRIVER_PATH
         value: /usr/bin/chromedriver
+      - key: PYTHONUNBUFFERED
+        value: "1"
+      - key: PORT
+        value: "10000"
