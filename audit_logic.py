@@ -17,7 +17,10 @@ from selenium.webdriver.chrome.options import Options
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
-from webdriver_manager.chrome import ChromeDriverManager
+
+# Optional: environment overrides for containerized Chrome/Driver
+CHROME_BINARY = os.getenv('CHROME_BINARY')  # e.g., /usr/bin/chromium
+CHROMEDRIVER_PATH = os.getenv('CHROMEDRIVER_PATH')  # e.g., /usr/bin/chromedriver
 
 
 class WebsiteAuditor:
@@ -34,16 +37,26 @@ class WebsiteAuditor:
         chrome_options = Options()
         
         if self.headless:
-            chrome_options.add_argument("--headless")
+            chrome_options.add_argument("--headless=new")
         
         chrome_options.add_argument("--no-sandbox")
         chrome_options.add_argument("--disable-dev-shm-usage")
         chrome_options.add_argument("--disable-gpu")
         chrome_options.add_argument("--window-size=1920,1080")
         chrome_options.add_argument("--user-agent=Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36")
+
+        if CHROME_BINARY:
+            chrome_options.binary_location = CHROME_BINARY
         
-        service = Service(ChromeDriverManager().install())
-        self.driver = webdriver.Chrome(service=service, options=chrome_options)
+        # Prefer Selenium Manager; if CHROMEDRIVER_PATH is provided, use it
+        try:
+            if CHROMEDRIVER_PATH:
+                self.driver = webdriver.Chrome(service=Service(executable_path=CHROMEDRIVER_PATH), options=chrome_options)
+            else:
+                self.driver = webdriver.Chrome(options=chrome_options)
+        except Exception:
+            # Fallback to explicit empty Service which still uses Selenium Manager under the hood
+            self.driver = webdriver.Chrome(service=Service(), options=chrome_options)
         
     def close_driver(self):
         """Close the WebDriver."""
@@ -80,15 +93,9 @@ class WebsiteAuditor:
                 }
             }
             
-            # TODO: Implement actual audit logic
-            # 1. Crawl sitemap if available
-            # 2. Discover all internal pages
-            # 3. Perform checks on each page
-            # 4. Compile results
-            
             print(f"Starting audit for: {url}")
             
-            # Placeholder audit logic
+            # Placeholder for real audit work
             audit_data['pages_audited'] = 1
             audit_data['total_issues'] = 0
             
@@ -136,46 +143,22 @@ class WebsiteAuditor:
             writer.writerow(['Summary', 'Pages Audited', 'Completed', str(audit_data.get('pages_audited', 0)), ''])
             writer.writerow(['Summary', 'Total Issues', 'Completed', str(audit_data.get('total_issues', 0)), ''])
             
-            # TODO: Add detailed audit results
-            # This will be populated with actual audit findings
-            
         return filepath
 
 
 def perform_audit(url):
-    """
-    Convenience function to perform an audit on a single URL.
-    
-    Args:
-        url (str): The URL to audit
-        
-    Returns:
-        dict: Audit results
-    """
     auditor = WebsiteAuditor()
     return auditor.perform_audit(url)
 
 
 def generate_csv_report(audit_data, export_dir='export'):
-    """
-    Convenience function to generate a CSV report.
-    
-    Args:
-        audit_data (dict): The audit results
-        export_dir (str): Directory to save the CSV file
-        
-    Returns:
-        str: Path to the generated CSV file
-    """
     auditor = WebsiteAuditor()
     return auditor.generate_csv_report(audit_data, export_dir)
 
 
 if __name__ == "__main__":
-    # Test the audit functionality
     test_url = "https://example.com"
     print(f"Testing audit functionality with: {test_url}")
-    
     auditor = WebsiteAuditor()
     results = auditor.perform_audit(test_url)
     print(f"Audit completed. Results: {results}")
