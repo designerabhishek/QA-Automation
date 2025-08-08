@@ -1,0 +1,13 @@
+services:
+  - type: web
+    name: qa-automation-minimal
+    env: docker
+    plan: free
+    autoDeploy: true
+    healthCheckPath: /health
+    dockerfilePath: ./Dockerfile.minimal
+    envVars:
+      - key: SECRET_KEY
+        generateValue: true
+      - key: PYTHONUNBUFFERED
+        value: "1"
