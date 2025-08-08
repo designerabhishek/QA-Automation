@@ -42,9 +42,9 @@ RUN mkdir -p export
 # Expose port (Render will override this)
 EXPOSE 10000
 
-# Health check (simplified)
+# Health check (use /health)
 HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
-    CMD curl -f http://localhost:${PORT:-10000}/ || exit 1
+    CMD curl -f http://localhost:${PORT:-10000}/health || exit 1
 
 # Render provides $PORT
-CMD gunicorn --bind 0.0.0.0:$PORT --timeout 120 --workers 1 --threads 2 app:app
+CMD gunicorn --bind 0.0.0.0:$PORT --timeout 120 --workers 1 --threads 2 --access-logfile - --error-logfile - app:app
