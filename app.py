@@ -6,7 +6,7 @@ import tempfile
 import shutil
 
 app = Flask(__name__)
-app.secret_key = 'your-secret-key-here'  # Change this in production
+app.secret_key = os.getenv('SECRET_KEY', 'your-secret-key-here')  # Override in production
 
 # Ensure export directory exists
 EXPORT_DIR = 'export'

@@ -16,7 +16,7 @@ A comprehensive web-based website auditing tool built with Python, Flask, and Se
 - **Browser Automation**: Selenium WebDriver
 - **HTML Parsing**: BeautifulSoup4
 - **Web Server**: Gunicorn (for production deployment)
-- **Dependencies**: webdriver-manager for automatic ChromeDriver management
+- **Dependencies**: Uses Selenium Manager by default; Docker image includes Chromium + Chromedriver
 
 ## Project Structure
 
@@ -25,116 +25,55 @@ A comprehensive web-based website auditing tool built with Python, Flask, and Se
 |-- app.py               # Main Flask application
 |-- audit_logic.py       # Selenium and BeautifulSoup audit functions
 |-- requirements.txt     # Python dependencies
-|-- .gitignore          # Git ignore patterns
-|-- README.md           # Project documentation
+|-- .gitignore           # Git ignore patterns
+|-- Dockerfile           # Container image (Chromium + Chromedriver)
+|-- Procfile             # App start command (for PaaS)
+|-- render.yaml          # Render deployment config
+|-- README.md            # Project documentation
 |-- /templates/
-|   |-- index.html      # Main user interface
-|   |-- results.html    # Results display page
-|-- /export/            # Generated CSV reports
+|   |-- index.html       # Main user interface
+|   |-- results.html     # Results display page
+|-- /export/             # Generated CSV reports
 ```
 
-## Installation
+## Local Installation
 
-1. **Clone the repository**:
-   ```bash
-   git clone <repository-url>
-   cd Site-Audit-Automation
-   ```
+1. Create a virtual environment and install dependencies:
+```bash
+python3 -m venv venv
+source venv/bin/activate
+pip install -r requirements.txt
+```
 
-2. **Create a virtual environment**:
-   ```bash
-   python -m venv venv
-   source venv/bin/activate  # On Windows: venv\Scripts\activate
-   ```
+2. Run the application:
+```bash
+python3 app.py
+```
 
-3. **Install dependencies**:
-   ```bash
-   pip install -r requirements.txt
-   ```
+3. Access the application at `http://localhost:5000`
 
-4. **Run the application**:
-   ```bash
-   python app.py
-   ```
+## Deployment (Render)
 
-5. **Access the application**:
-   Open your browser and navigate to `http://localhost:5000`
+- This repo includes a Dockerfile and `render.yaml`.
+- Render will build from Dockerfile and run `gunicorn app:app`.
+- The Docker image installs Chromium and Chromedriver and sets env vars:
+  - `CHROME_BINARY=/usr/bin/chromium`
+  - `CHROMEDRIVER_PATH=/usr/bin/chromedriver`
+- Flask `SECRET_KEY` is read from env (set in `render.yaml`).
+
+### Steps
+1. Push this repo to GitHub
+2. Create a new Web Service on Render (use this repo)
+3. Confirm Environment: Docker
+4. Health check path: `/`
+5. Deploy
 
 ## Usage
 
-1. **Input URLs**: Enter one or more website URLs in the textarea (one per line)
-2. **Start Audit**: Click the "Start Audit" button to begin the analysis
-3. **Wait for Processing**: The tool will crawl each website and perform comprehensive checks
-4. **Download Reports**: Access individual CSV reports for each audited website
+1. Paste one or more website URLs (one per line)
+2. Click "Start Audit"
+3. Wait for processing and download per-site CSVs
 
-## Development Status
-
-### ✅ Completed
-- Basic Flask application structure
-- Modern, responsive web interface
-- URL parsing and form handling
-- File download functionality
-- Project structure and documentation
-
-### 🚧 In Progress
-- Selenium audit logic implementation
-- CSV report generation with detailed findings
-- Multi-page website crawling
-- Comprehensive audit checks
-
-### 📋 Planned Features
-- Sitemap discovery and crawling
-- Link integrity validation
-- Image optimization checks
-- SEO analysis
-- Performance metrics
-- Accessibility compliance checks
-- Custom audit configurations
-
-## API Endpoints
-
-- `GET /` - Main application page
-- `POST /audit` - Submit URLs for auditing
-- `GET /results` - View audit results
-- `GET /download/<filename>` - Download CSV reports
-
-## Configuration
-
-### Environment Variables
-- `FLASK_ENV`: Set to `development` or `production`
-- `SECRET_KEY`: Flask secret key for session management
-
-### Chrome WebDriver
-The application automatically downloads and manages ChromeDriver using `webdriver-manager`. No manual installation required.
-
-## Deployment
-
-### Development
-```bash
-python app.py
-```
-
-### Production
-```bash
-gunicorn -w 4 -b 0.0.0.0:8000 app:app
-```
-
-## Contributing
-
-1. Fork the repository
-2. Create a feature branch
-3. Make your changes
-4. Add tests if applicable
-5. Submit a pull request
-
-## License
-
-This project is licensed under the MIT License - see the LICENSE file for details.
-
-## Support
-
-For issues and questions, please create an issue in the repository or contact the development team.
-
----
-
-**Note**: This is the initial implementation. The audit logic module (`audit_logic.py`) contains placeholder functionality and will be fully implemented in the next development phase.
+## Notes
+- For full audits locally, Chrome must be installed. In Docker deployment, Chromium is preinstalled.
+- If you run without Docker in production, ensure Chrome and Chromedriver are available and set `CHROME_BINARY`/`CHROMEDRIVER_PATH`.
